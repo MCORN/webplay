@@ -1,5 +1,3 @@
-var currentResponse = "Checksum";
-
 $(document).ready(function() {
     init();
     $('input, textarea').placeholder();
@@ -7,110 +5,127 @@ $(document).ready(function() {
 
 var init = function() {
   setupGenre();
+  searchGenre();
 }
 
 var setupGenre = function() {
-  //$('#theGenre').bind("propertychange keyup input paste", function() {
-    callGenre();
-  //});
+  callGenre();
+}
+
+var searchGenre = function() {
+  $('#theGenre').bind("propertychange keyup input paste", function() {
+    search();
+  });
 }
 
 var callGenre = function() {
   $.ajax({
     type: "GET",
     url: baseUrlApi + 'item/',
-    data: {},
-    //success: populateGenre,
+    success: populateGenre,
     dataType : "json",
-    contentType : "text/plain"
+    contentType: "application/json"//,
   });
 }
+
+var search = function() {
+  $.ajax({
+    type: "GET",
+    url: baseUrlApi + 'item/query/genre:' + $('#theGenre').val(),
+    success: populatePlaylist,
+    dataType : "json",
+    contentType: "application/json"
+  });
+}
+
+var populatePlaylist = function(data) {
+  //Randomize order
+  data.results.sort(function() {
+    return 0.5 - Math.random();
+  });
+  var playlist = '';
+  $.each(data.results, function(index){
+    playlist = playlist + '<li><a href="#" data-src="' + baseUrlApi + 'item/' + data.results[index].id + '/file">' + data.results[index].title + '</a></li>';
+  });
+  $('#wrapper').append('<h1>My ' + $('#theGenre').val() + ' Playlist</em></h1><audio preload></audio><ol id="wrapped">' + playlist + '</ol>');
+  initiateAudioJS();
+}
+
+var initiateAudioJS = function() { 
+    // Setup the player to autoplay the next track
+    var a = audiojs.createAll({
+      trackEnded: function() {
+        var next = $('ol li.playing').next();
+        if (!next.length) next = $('ol li').first();
+        next.addClass('playing').siblings().removeClass('playing');
+        audio.load($('a', next).attr('data-src'));
+        audio.play();
+      }
+    });
+    
+    // Load in the first track
+    var audio = a[0];
+        first = $('ol a').attr('data-src');
+    $('ol li').first().addClass('playing');
+    audio.load(first);
+
+    // Load in a track on click
+    $('ol li').click(function(e) {
+      e.preventDefault();
+      $(this).addClass('playing').siblings().removeClass('playing');
+      audio.load($('a', this).attr('data-src'));
+      audio.play();
+    });
+    // Keyboard shortcuts
+    $(document).keydown(function(e) {
+      var unicode = e.charCode ? e.charCode : e.keyCode;
+         // right arrow
+      if (unicode == 39) {
+        var next = $('li.playing').next();
+        if (!next.length) next = $('ol li').first();
+        next.click();
+        // back arrow
+      } else if (unicode == 37) {
+        var prev = $('li.playing').prev();
+        if (!prev.length) prev = $('ol li').last();
+        prev.click();
+        // spacebar
+      } else if (unicode == 32) {
+        audio.playPause();
+      }
+    })
+  };
 
 var populateGenre = function(data) {
-  //alert(Json.Parse(items));
-  /*$.each(data.items,function(){
-      console.log(this);
-  });*/
-}
+  var uniqueNames = [];
+  var uniqueItems = [];
+  var options = $("#theGenre");
+  
+  //Splitting first
+  $.each(data.items, function(index){
+    //Up to 3 genres per track, comma-delimited and with spaces
+    var tmpItems = data.items[index].genre.split(',');
+    $.each(tmpItems, function(index2){
+      uniqueItems.push(tmpItems[index2].trim());
+    });
+  });
 
-var call = function() {
-  $.ajax({
-    type: "POST",
-    url: baseUrlApi,
-    data: JSON.stringify({"method": "GenerateChecksum", "params" : {"stringToHash": $('#stringToHash').val(), "privateKey": $('#privateKey').val()}}),
-    beforeSend: function() {
-      $('#myModal').modal({
-        backdrop: 'static',
-        keyboard: false
-      });
-      $('#myModalFooter').addClass("hide");
-      $('#myModalBody').html(
-        '<p><img src="'+ baseUrl +'includes/images/ajax-loader.gif"/> One moment please while we process the transaction...</p>'
-      );
-    },
-    success: showResponse,
-    complete: function() {
-      $('#myModalFooter').removeClass("hide");
-      activateResponseTab();
-    },
-    dataType: "json",
-    contentType : "text/plain",
+  //Keeping one of each (ie unique) items
+  $.each(uniqueItems, function(i, el){
+   if($.inArray(el, uniqueNames) === -1) uniqueNames.push(el);
+  });
+
+  //Sorting alphabetically
+  uniqueNames.sort(sortByValue);
+
+  //Building drop down
+  $.each(uniqueNames, function(index){
+   options.append($("<option />").val(uniqueNames[index]).text(uniqueNames[index]));
   });
 }
 
-var showResponse = function(data) {
-  $('#myModalBody').html('');
-  $('#myModalBody').append($('<div><ul id="responses" class="nav nav-tabs nav-justified response-tabs"></ul></div>'));
-
-  showResponseElement('Checksum', data);
-}
-
-var activateResponseTab = function() {
-  $('.response-tabs li').removeClass("active");
-  $('#' + currentResponse).addClass("active");
-  toggleResponse("response-container", currentResponse);
-}
-
-var setResponseTabActions = function() {
-  $('.response-tabs li').click(function() {
-    currentResponse = $(this).attr('id');
-    activateResponseTab();
-
-    return false;
-  });
-}
-
-var toggleResponse = function(responseClass, currentID) {
-  $('.' + responseClass).addClass("hide");
-  $('#' + currentID + '-container').removeClass("hide");
-}
-
-var showResponseElement = function(header, data) {
-  $('#responses').prepend($('<li id="' + header + '"><a href="#">' + header + '</a></li>'));
-
-  //$('#myModalBody').append($('<div id="' + header + '-container" class="response-container"><table id="' + header + '-table" class="table"><thead><tr><th>Field</th><th>Value</th></tr><tbody></tbody></table></div>'));
-  $('#myModalBody').append($('<div id="' + header + '-container" class="response-container"></div>'));
-  var checksum = "";
-  $.each(data, function(key, value){
-    switch(key) {
-      case "checksum":
-        checksum = value;
-        break;
-    }
-  });
-
-  $('#' + header + '-container').append('String to hash (use exact case of items as they appear in xml):<br>');
-  $('#' + header + '-container').append('&nbsp;&nbsp;&nbsp;&nbsp;' + $('#stringToHash').val() + "<br>");
-  $('#' + header + '-container').append('algorithm:<br>');
-  $('#' + header + '-container').append('&nbsp;&nbsp;&nbsp;&nbsp;hmac_sha1(privateKey, stringToHash)<br>');
-  $('#' + header + '-container').append('therefore:<br>');
-  $('#' + header + '-container').append('&nbsp;&nbsp;&nbsp;&nbsp;checksum = hmac_sha1(<br>');
-  $('#' + header + '-container').append("&nbsp;&nbsp;&nbsp;&nbsp;'" + $('#privateKey').val() + "',<br>")
-  $('#' + header + '-container').append("&nbsp;&nbsp;&nbsp;&nbsp;'" + $('#stringToHash').val() + "'<br>");
-  $('#' + header + '-container').append(')<br>');
-  $('#' + header + '-container').append('And checksum is equal to:<br>');
-  $('#' + header + '-container').append('&nbsp;&nbsp;&nbsp;&nbsp;' + checksum + '<br>');
-
-  activateResponseTab();
-  setResponseTabActions();
+var sortByValue = function(a, b){
+  var aValue = a.toLowerCase();
+  var bValue = b.toLowerCase(); 
+  return ((aValue < bValue) ? -1 : ((aValue > bValue) ? 1 : 0));
 }

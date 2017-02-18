@@ -1,15 +1,19 @@
-<!--<audio controls>
-  <source src="http://192.168.3.113:8337/item/7/file" type="audio/mpeg">
-Your browser does not support the audio element.
-</audio>!-->
-
 <!doctype html>
 <html lang="en">
   <head>
     <title>Radio Player</title>
     
-    <base href="http://192.168.3.113:8000/" />
+    <base href="http://localhost:3000/" />
     <link href="includes/styles/bootstrap.min.css" rel="stylesheet">
+    <!--audioJS-->
+    <style>
+      ol { padding: 0px; margin: 0px; list-style: decimal-leading-zero inside; color: #ccc; width: 460px; border-top: 1px solid #ccc; font-size: 0.9em; }
+      ol li { position: relative; margin: 0px; padding: 9px 2px 10px; border-bottom: 1px solid #ccc; cursor: pointer; }
+      ol li a { display: block; text-indent: -3.3ex; padding: 0px 0px 0px 20px; }
+      li.playing { color: #aaa; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.3); }
+      li.playing a { color: #000; }
+      li.playing:before { content: '♬'; width: 14px; height: 14px; padding: 3px; line-height: 14px; margin: 0px; position: absolute; left: -24px; top: 9px; color: #000; font-size: 13px; text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2); }
+    </style>
   </head>
 
   <body>
@@ -21,7 +25,6 @@ Your browser does not support the audio element.
           <select name="theGenre" id="theGenre" style="width:500px;">
             <option value="">select one</option>
           </select><br>
-          <input type="submit" value="Submit" onClick="call(); return false;">
         </form>
       </div>
       <div id="myPlayer" class="container hide">
@@ -32,8 +35,8 @@ Your browser does not support the audio element.
     </div>
   
   <script>
-      var baseUrl = "http://192.168.3.113:8000/";
-      var baseUrlApi = "http://192.168.3.113:8337/";
+      var baseUrl = "http://localhost:3000/";
+      var baseUrlApi = "http://192.168.3.113:90/beet/";
   </script>
   <script src="includes/javascript/jquery.js" type="text/javascript"></script>
   <script src="includes/javascript/jquery.placeholder.min.js" type="text/javascript"></script>
@@ -41,5 +44,12 @@ Your browser does not support the audio element.
   <script src="includes/javascript/bootstrap-button.js" type="text/javascript"></script>
   <script src="includes/javascript/regula-min.js" type="text/javascript"></script>
   <script src="includes/javascript/radioplayer.js" type="text/javascript"></script>
+
+  <!--audioJS-->
+    <script src="audiojs/audio.min.js"></script>
+
+    <div id="wrapper" class="container">
+
+    </div>
 </body>
 </html>
