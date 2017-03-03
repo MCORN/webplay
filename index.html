@@ -18,11 +18,16 @@
 
   <body>
     <div id="myForm" class="container">
+    <legend>Build your playlist</legend>
       <div class="row">
         <form name="form" method="post">
           <input type="hidden" name="action" value="execute">
           Genre:<br>
           <select name="theGenre" id="theGenre" style="width:500px;">
+            <option value="">select one</option>
+          </select><br>
+          Artist:<br>
+          <select name="theArtist" id="theArtist" style="width:500px;">
             <option value="">select one</option>
           </select><br>
         </form>

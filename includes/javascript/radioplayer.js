@@ -4,34 +4,37 @@ $(document).ready(function() {
   });
 
 var init = function() {
-  setupGenre();
-  searchGenre();
+  setupDropdowns();
+  setupBindings();
 }
 
-var setupGenre = function() {
-  callGenre();
+var setupDropdowns = function() {
+  callDropdowns();
 }
 
-var searchGenre = function() {
+var setupBindings = function() {
   $('#theGenre').bind("propertychange keyup input paste", function() {
-    search();
+    search('genre', 'theGenre');
+  });
+  $('#theArtist').bind("propertychange keyup input paste", function() {
+    search('albumartist', 'theArtist');
   });
 }
 
-var callGenre = function() {
+var callDropdowns = function() {
   $.ajax({
     type: "GET",
     url: baseUrlApi + 'item/',
-    success: populateGenre,
+    success: populateDropdowns,
     dataType : "json",
     contentType: "application/json"//,
   });
 }
 
-var search = function() {
+var search = function(criterion, field) {
   $.ajax({
     type: "GET",
-    url: baseUrlApi + 'item/query/genre:' + $('#theGenre').val(),
+    url: baseUrlApi + 'item/query/' + criterion + ':' + $('#' + field).val(),
     success: populatePlaylist,
     dataType : "json",
     contentType: "application/json"
@@ -96,15 +99,21 @@ var initiateAudioJS = function() {
     })
   };
 
-var populateGenre = function(data) {
+var populateDropdowns = function(data) {
+  populate(data, 'genre', 'theGenre');
+  populate(data, 'albumartist', 'theArtist');
+}
+
+var populate = function(data, criterion, field) {
   var uniqueNames = [];
   var uniqueItems = [];
-  var options = $("#theGenre");
+  var options = $("#" + field);
   
   //Splitting first
   $.each(data.items, function(index){
     //Up to 3 genres per track, comma-delimited and with spaces
-    var tmpItems = data.items[index].genre.split(',');
+    var tmpString = "data.items[index]." + criterion + ".split(',')";
+    var tmpItems = eval(tmpString);
     $.each(tmpItems, function(index2){
       uniqueItems.push(tmpItems[index2].trim());
     });
